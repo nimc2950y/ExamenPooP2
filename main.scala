@@ -74,29 +74,45 @@ val publicaciones: List[Publicacion] = List(
   )
 )
 case class PublicacionConPuntaje(pub: Publicacion, puntaje: Int)
+object RedSocial {
 
-def puntajePub(publicacion: Publicacion): Int = {
-  // Cuenta cuántas veces aparece "like" y lo multiplica por su valor 
-  val like = publicacion.reacciones.count(_ == "like") * 1
-  val loves = publicacion.reacciones.count(_ == "love") * 3
-  val wow  = publicacion.reacciones.count(_ == "wow") * 2
-  val haha  = publicacion.reacciones.count(_ == "haha") * 1
-  val angry = publicacion.reacciones.count(_ == "angry") * -1
-  like + loves + wow + haha + angry
-}
+  // 🎯 Estructura de datos auxiliar: Mapeo de Reacción a Puntaje
+  val PUNTUACIONES_REACCION: Map[String, Int] = Map(
+    "like" -> 1,
+    "love" -> 3,
+    "wow" -> 2,
+    "haha" -> 1,
+    "angry" -> -1
+  )
 
+  /*
+   Función mejorada para calcular el puntaje total de una publicación.
+   Utiliza .map y .sum sobre la lista de reacciones.
+   */
+  def puntajePub(publicacion: Publicacion): Int = {
+    publicacion.reacciones
+      // Mapea cada reacción a su puntaje. getOrElse(reaccion, 0) asigna 0
+      // si una reacción no está definida en el mapa (útil para el futuro).
+      .map(reaccion => PUNTUACIONES_REACCION.getOrElse(reaccion, 0))
+      // Suma todos los puntajes.
+      .sum
+  }
 
+  /* Función principal que filtra, calcula puntajes y encuentra la publicación máxima. */
   def masImpactante(publicaciones: List[Publicacion], minLongitud: Int): PublicacionConPuntaje = {
-
     publicaciones
-      .filter(_.texto.length >= minLongitud) 
-      .map(pub => PublicacionConPuntaje(pub, puntajePub(pub))) 
+      // 1. FILTRAR por longitud mínima.
+      .filter(_.texto.length >= minLongitud)
+      // 2. MAPEAR: Convierte a PublicacionConPuntaje, calculando el puntaje.
+      .map(pub => PublicacionConPuntaje(pub, puntajePub(pub)))
+      // 3. ENCONTRAR MÁXIMO (REDUCCIÓN).
       .maxBy(_.puntaje)
   }
+}
 
 @main
 def main(): Unit = {
-    val resultado = masImpactante(publicaciones, 30)
+    val resultado = RedSocial.masImpactante(publicaciones, 30)
     println(s"La publicación más impactante es de: ${resultado.pub.autor}")
     println(s"Texto: ${resultado.pub.texto}")
     println(s"Puntaje total: ${resultado.puntaje}")
